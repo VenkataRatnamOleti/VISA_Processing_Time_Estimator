@@ -25,7 +25,6 @@ def main():
         
         print("Missing before:", df["full_time_position_y_n"].isnull().sum())
 
-        # Strip spaces and convert to uppercase
         df["full_time_position_y_n"] = (
             df["full_time_position_y_n"]
             .astype(str)
@@ -33,19 +32,16 @@ def main():
             .str.upper()
         )
 
-        # Replace common variations
         df["full_time_position_y_n"] = df["full_time_position_y_n"].replace({
             "YES": "Y",
             "NO": "N"
         })
 
-        # Fill missing with mode
         df["full_time_position_y_n"] = df["full_time_position_y_n"].replace("NAN", np.nan)
         df["full_time_position_y_n"] = df["full_time_position_y_n"].fillna(
             df["full_time_position_y_n"].mode()[0]
         )
 
-        # Now safe mapping
         df["full_time_position_y_n"] = df["full_time_position_y_n"].map({
             "Y": 1,
             "N": 0
@@ -113,9 +109,6 @@ def main():
     plt.savefig(os.path.join(OUTPUT_DIR, "visa_status_avg_processing.png"))
     plt.close()
 
-
-
-
     plt.figure(figsize=(10, 5))
     sns.boxplot(
         x="visa_status",
@@ -127,8 +120,6 @@ def main():
     plt.savefig(os.path.join(OUTPUT_DIR, "visa_status_boxplot.png"))
     plt.close()
 
-
-
     plt.figure(figsize=(10, 8))
     sns.heatmap(
         df[num_cols].corr(),
@@ -139,8 +130,6 @@ def main():
     plt.title("Correlation Heatmap")
     plt.savefig(os.path.join(OUTPUT_DIR, "correlation_heatmap.png"))
     plt.close()
-
-
 
     df["month"] = df["case_received_date"].dt.month
 
@@ -155,11 +144,6 @@ def main():
     plt.savefig(os.path.join(OUTPUT_DIR, "monthly_trend.png"))
     plt.close()
 
-
-
-
-    # “Processing time varies seasonally, likely due to application volume.”
-
     pairplot = sns.pairplot(
         df[num_cols].sample(2000),
         diag_kind="kde"
@@ -167,9 +151,6 @@ def main():
     pairplot.savefig(os.path.join(OUTPUT_DIR, "pairplot.png"))
     plt.close()
 
-
-
-    # To avoid memory issues.
     print("Remaining missing values:")
     print(df.isnull().sum().sort_values(ascending=False).head(10))
 
@@ -179,17 +160,6 @@ def main():
     plt.title("Missing Values Heatmap")
     plt.savefig(os.path.join(OUTPUT_DIR, "missing_values_heatmap.png"))
     plt.close()
-
-
-
-
-    # ## Extended EDA Summary
-    # 
-    # - Numerical features show right-skewed distributions
-    # - Processing time varies significantly across case categories
-    # - Strong seasonality observed in monthly trends
-    # - Outliers exist and require capping before ML modeling
-    # - Correlation analysis helps reduce redundant features
 
     df.columns
 
@@ -247,15 +217,6 @@ def main():
     plt.savefig(os.path.join(OUTPUT_DIR, "work_state_analysis.png"))
     plt.close()
 
-
-
-
-    # ## Feature Insights
-    # - Processing time varies significantly across visa categories
-    # - Certain regions consistently show longer average processing times
-    # - Seasonal features (month, year) influence processing duration
-    # - Extreme outliers exist and must be handled before modeling
-    # - Some categorical features have high variance and are strong ML candidates
 if __name__ == "__main__":
     main()
 

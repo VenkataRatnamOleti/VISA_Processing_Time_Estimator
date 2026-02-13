@@ -58,9 +58,6 @@ def main():
     df = process_dates(df)
 
     print("Final dataset shape:", df.shape)
-    # print(df[
-    #     ["case_received_date", "decision_date", "processing_time_days"]
-    # ].head())
     print(df.head())
 
 
