@@ -2,64 +2,97 @@ import os
 import pandas as pd
 import numpy as np
 
-DATA_PATH = "data/VisaFile.csv"
-
-if not os.path.exists(DATA_PATH):
-    raise FileNotFoundError(
-        "Dataset not found. Please place VisaFile.csv inside the data/ folder."
-    )
+FILE_LOCATION = r"A:\Infosys_SpringBoard\AI_Enabled_VISA_Status_Prediction_and_Processing_Time_Estimator\src\data\VisaFile.csv"
 
 
-def load_data(path):
-    return pd.read_csv(path, encoding="latin1", low_memory=False)
+# STEP - 1
+def read_dataset(file_path):
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError("Visa dataset not found at given path.")
+
+    data = pd.read_csv(file_path, encoding="latin1", low_memory=False)
+    return data
 
 
-def clean_columns(df):
-    df.columns = (
-        df.columns.str.strip()
-                  .str.lower()
-                  .str.replace(" ", "_")
-    )
-    return df
+# STEP - 2
+def normalize_headers(dataframe):
+    cleaned_cols = []
+
+    for col in dataframe.columns:
+        col = col.strip().lower().replace(" ", "_")
+        cleaned_cols.append(col)
+
+    dataframe.columns = cleaned_cols
+    return dataframe
 
 
-def handle_missing_values(df):
-    df = df.drop_duplicates()
+# STEP - 3
+def treat_missing_data(dataframe):
 
-    threshold = 0.4 * len(df)
-    df = df.dropna(axis=1, thresh=threshold)
+    # remove duplicate rows first
+    dataframe = dataframe.drop_duplicates().copy()
 
-    for col in df.columns:
-        if df[col].dtype == "object":
-            df[col] = df[col].fillna("unknown")
+    # drop columns with excessive missing values >60%
+    min_non_null = int(0.4 * len(dataframe))
+    dataframe = dataframe.dropna(axis=1, thresh=min_non_null)
+
+    # fill remaining missing values
+    for column in dataframe.columns:
+
+        if dataframe[column].dtype == "O":
+            dataframe[column].fillna("unknown", inplace=True)
+
         else:
-            df[col] = df[col].fillna(df[col].median())
+            median_val = dataframe[column].median()
+            dataframe[column].fillna(median_val, inplace=True)
 
-    return df
+    return dataframe
 
 
-def process_dates(df):
-    df["case_received_date"] = pd.to_datetime(df["case_received_date"],format="mixed", errors="coerce")
-    df["decision_date"] = pd.to_datetime(df["decision_date"],format="mixed", errors="coerce")
+# STEP - 4
+def generate_processing_time(dataframe):
 
-    df = df.dropna(subset=["case_received_date", "decision_date"])
+    dataframe["case_received_date"] = pd.to_datetime(
+        dataframe["case_received_date"], errors="coerce"
+    )
 
-    df["processing_time_days"] = (
-        df["decision_date"] - df["case_received_date"]
+    dataframe["decision_date"] = pd.to_datetime(
+        dataframe["decision_date"], errors="coerce"
+    )
+
+    # remove invalid date rows
+    dataframe = dataframe.dropna(
+        subset=["case_received_date", "decision_date"]
+    )
+
+    # calculate processing time
+    dataframe["processing_time_days"] = (
+        dataframe["decision_date"] - dataframe["case_received_date"]
     ).dt.days
 
-    return df[df["processing_time_days"] >= 0]
+    # remove negative values
+    dataframe = dataframe[dataframe["processing_time_days"] >= 0]
+
+    return dataframe
 
 
-def main():
-    df = load_data(DATA_PATH)
-    df = clean_columns(df)
-    df = handle_missing_values(df)
-    df = process_dates(df)
+# MAIN
+def run_preprocessing():
 
-    print("Final dataset shape:", df.shape)
+    df = read_dataset(FILE_LOCATION)
+
+    df = normalize_headers(df)
+
+    df = treat_missing_data(df)
+
+    df = generate_processing_time(df)
+
+    print("\n✅ Preprocessing Completed")
+    print("Final Dataset Shape:", df.shape)
     print(df.head())
+
+    return df
 
 
 if __name__ == "__main__":
-    main()
+    final_df = run_preprocessing()
