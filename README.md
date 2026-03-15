@@ -1,4 +1,4 @@
-\# VISA Processing Time Estimator
+# VISA Processing Time Estimator
 
 
 
@@ -12,17 +12,17 @@ This tool helps applicants and researchers analyze average wait times, trends, a
 
 
 
-\## 🚀 Features
+## 🚀 Features
 
-\- Estimate visa processing times based on datasets.
+- Estimate visa processing times based on datasets.
 
-\- Support for multiple visa categories (student, work, tourist, etc.).
+- Support for multiple visa categories (student, work, tourist, etc.).
 
-\- Data preprocessing and cleaning pipeline.
+- Data preprocessing and cleaning pipeline.
 
-\- Visualization of processing time trends.
+- Visualization of processing time trends.
 
-\- Modular code structure for easy extension.
+- Modular code structure for easy extension.
 
 
 
@@ -30,16 +30,13 @@ This tool helps applicants and researchers analyze average wait times, trends, a
 
 
 
-\## 📂 Project Structure
+## 📂 Project Structure
 
-VISA\_Processing\_Time\_Estimator/ │── src/                # Core source code 
-
+VISA\_Processing\_Time\_Estimator/ 
+│── src/                # Core source code 
 │   ├── data/           # Input datasets 
-
 │── README.md           # Project documentation 
-
 │── LICENSE             # License file 
-
 │── .gitignore          # Git ignore rules
 
 
@@ -50,7 +47,7 @@ VISA\_Processing\_Time\_Estimator/ │── src/                # Core source c
 
 
 
-\## ⚙️ Installation
+## ⚙️ Installation
 
 Clone the repository and install dependencies:
 
