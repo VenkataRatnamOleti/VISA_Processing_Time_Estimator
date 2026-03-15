@@ -85,4 +85,8 @@ if __name__ == "__main__":
 
   
     print(f"Total columns for training: {len(final_df.columns)}")
+<<<<<<< HEAD
     print(final_df[['center_workload', 'country_avg_delay', 'priority_score', 'seasonal_index']].head())
+=======
+    print(final_df[['center_workload', 'country_avg_delay', 'priority_score', 'seasonal_index']].head())
+>>>>>>> 66889e031794303f350eb927fd1992a125a78b74
