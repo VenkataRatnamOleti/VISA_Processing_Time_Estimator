@@ -8,8 +8,13 @@ The VISA Processing Time Estimator is a data-driven application designed to prov
 
 ## ✨ Features
 
-- 🗄️ Database
-
+- 🗄️ Database integration for historical visa processing data.
+- 🔮 Predict visa processing times using machine learning models.
+- ✅ Acceptance probability estimation based on heuristic and model-based approaches.
+- 🌐 Interactive frontend for user-friendly predictions.
+- 🔗 Live deployment:
+  - **Frontend**: [VISA Processing Time Estimator](https://visa-processing-time-estimator.vercel.app/)
+  - **Backend**: Hosted on Render (API endpoints).
 
 ## 📁 Project Structure
 
