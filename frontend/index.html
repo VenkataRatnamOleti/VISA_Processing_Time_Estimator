@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VISA Processing Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">VISA Insights</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navmenu">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link active" href="#dashboard">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="#predict">Predict</a></li>
+            <li class="nav-item"><a class="nav-link" href="#insights">Insights</a></li>
+            <li class="nav-item"><a class="nav-link" href="#chat">Chatbot</a></li>
+            <li class="nav-item"><a class="nav-link" href="#stats">Statistics</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero text-white py-5">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-8">
+            <h1 class="display-6">VISA Processing Time Estimator</h1>
+            <p class="lead">Professional dashboard for predictions, insights and quick analysis.</p>
+            <div class="d-flex gap-2">
+              <a href="#predict" class="btn btn-primary">Make a prediction</a>
+              <a href="#insights" class="btn btn-outline-light">View insights</a>
+            </div>
+          </div>
+          <div class="col-lg-4 text-end">
+            <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=6e3e7b029c1b6e7b9f7d8b2f5c4d9d31" alt="office" class="hero-img img-fluid rounded shadow-lg d-none d-lg-block" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container my-5 text-center">
+      <div class="card p-5 shadow-sm">
+        <h2>Welcome</h2>
+        <p class="lead">This project includes a dashboard for Visa processing predictions and insights.</p>
+        <div class="d-flex justify-content-center gap-3 mt-3">
+          <a class="btn btn-primary" href="dashboard.html">Dashboard</a>
+          <a class="btn btn-outline-primary" href="predict.html">Predict</a>
+          <a class="btn btn-outline-primary" href="insights.html">Insights</a>
+          <a class="btn btn-outline-primary" href="chat.html">Chatbot</a>
+          <a class="btn btn-outline-primary" href="stats.html">Statistics</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="text-center py-4 text-muted">
+      &copy; 2026 Visa Processing Estimator
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Set API_BASE dynamically for deployment
+        window.__API_BASE = "https://your-service-name.onrender.com";
+    </script>
+  </body>
+</html>
