@@ -37,6 +37,16 @@ try:
 except Exception as e:
     print(f'[-] Could not load acceptance model: {e}')
 
+try:
+    visa_model_path = os.path.join(BASE_DIR, '..', 'models', 'visa_model.pkl')
+    if os.path.exists(visa_model_path):
+        estimator.load_model(visa_model_path)
+        print('[+] Visa model loaded successfully.')
+    else:
+        print('[-] Visa model file not found. Ensure visa_model.pkl is in the models directory.')
+except Exception as e:
+    print(f'[-] Failed to load visa model: {e}')
+
 
 @app.route('/api/estimate-days', methods=['POST'])
 def estimate_days():
