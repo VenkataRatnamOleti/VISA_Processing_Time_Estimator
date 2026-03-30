@@ -1,5 +1,5 @@
-// API_BASE is configurable via window.__API_BASE for deployment
-const API_BASE = (window.__API_BASE || 'http://127.0.0.1:5000') + '/api';
+// Use environment variable for API_BASE or fallback to localhost
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://127.0.0.1:5000/api';
 
 async function fetchStats(){
   const res = await fetch(`${API_BASE}/stats`);
