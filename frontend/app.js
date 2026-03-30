@@ -1,5 +1,4 @@
-// Use environment variable for API_BASE or fallback to localhost
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://127.0.0.1:5000/api';
+const API_BASE = "https://visa-processing-time-estimator.onrender.com/api";
 
 async function fetchStats(){
   const res = await fetch(`${API_BASE}/stats`);
