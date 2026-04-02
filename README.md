@@ -155,19 +155,6 @@ xgboost: latest
 
 ---
 
-## 🔄 Important Updates
-
-- 📂 `data/` ➝ renamed to **`website_data/`**  
-- 📄 Dataset moved:
-  - From: `src/data/`
-  - To: `src/dataset/`
-
-### ⚠️ Required Changes
-- Update file paths in code:
-  - Replace `src/data` ➝ `src/dataset`
-  - Replace `data/` ➝ `website_data/`
-
----
 
 ## 🚀 How to Run the Project
 
