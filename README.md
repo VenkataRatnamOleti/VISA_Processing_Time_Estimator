@@ -281,9 +281,3 @@ Developed as part of an AI-driven project to improve transparency and efficiency
 ```
 
 ---
-
-If you want next level 🔥, I can:
-- Add **GitHub badges (accuracy, deployment, version)**  
-- Add **screenshots section (very important for recruiters)**  
-- Convert this into a **perfect LinkedIn + Resume project description**
-```
