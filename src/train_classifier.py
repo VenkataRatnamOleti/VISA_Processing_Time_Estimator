@@ -56,7 +56,7 @@ def preprocess_and_train(df: pd.DataFrame):
 
 	# Build preprocessing
 	numeric_transformer = StandardScaler()
-	categorical_transformer = OneHotEncoder(handle_unknown='ignore', sparse=False)
+	categorical_transformer = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
 
 	preprocessor = ColumnTransformer(
 		transformers=[

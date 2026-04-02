@@ -3,57 +3,129 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dashboard - VISA Insights</title>
+    <title>Dashboard - Visa AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet" />
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/">VISA Insights</a>
-        <div class="collapse navbar-collapse" id="navmenu">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item"><a class="nav-link active" href="dashboard.html">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="predict.html">Predict</a></li>
-            <li class="nav-item"><a class="nav-link" href="insights.html">Insights</a></li>
-            <li class="nav-item"><a class="nav-link" href="chat.html">Chatbot</a></li>
-            <li class="nav-item"><a class="nav-link" href="stats.html">Statistics</a></li>
-          </ul>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">🌐</div>
+          <div class="title">Visa AI</div>
         </div>
-      </div>
-    </nav>
+        <nav class="side-nav">
+          <a href="dashboard.html" class="nav-link active">Dashboard</a>
+          <a href="predict.html" class="nav-link">Predict</a>
+          <a href="insights.html" class="nav-link">Insights</a>
+          <a href="chat.html" class="nav-link">Chatbot</a>
+          <a href="stats.html" class="nav-link">Statistics</a>
+          <a href="feedback.html" class="nav-link">Feedback</a>
+        </nav>
+      </aside>
+      <main class="main-content">
+           <!-- Theme Toggle Top Right -->
+        <div class="d-flex justify-content-end mb-2">
+          <button id="themeToggle" class="theme-btn">🌓</button>
+        </div>
+        <h2>Dashboard</h2>
+        <div class="row g-3 mt-3">
+          <div class="col-md-3">
+            <div class="card p-3 feature-card click-animate">
+              <h6>Model Status</h6>
+              <p id="model-status" class="h5 muted">Loading...</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 feature-card click-animate">
+              <h6>Model RMSE</h6>
+              <p id="model-rmse" class="h5">-</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 feature-card click-animate">
+              <h6>Features</h6>
+              <p id="model-features" class="h5">-</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card p-3 feature-card click-animate">
+              <h6>Latest Verdict</h6>
+              <p id="latest-verdict" class="h5">—</p>
+            </div>
+          </div>
+        </div>
+        <div class="row g-3 mt-3">
+          <div class="col-md-4">
+            <div class="card p-3 feature-card click-animate">
+              <h6>Total Visits</h6>
+              <p id="visit-count" class="h5">-</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card p-3 feature-card click-animate">
+              <h6>Average Rating</h6>
+              <p id="avg-rating" class="h5">-</p>
+              <div id="rating-controls" class="mt-2">
+                <small class="muted">Rate this app:</small>
+                <div class="d-flex gap-1 mt-1" id="rating-buttons">
+                  <button class="btn btn-sm btn-outline-secondary" data-rate="1">1</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-rate="2">2</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-rate="3">3</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-rate="4">4</button>
+                  <button class="btn btn-sm btn-outline-secondary" data-rate="5">5</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card p-3 feature-card click-animate">
+              <h6>Model Accuracy (est)</h6>
+              <p id="model-accuracy" class="h5">-</p>
+            </div>
+          </div>
+        </div>
+        
+        <section class="row mt-4">
+          <div class="col-lg-8">
+            <div class="card p-3 feature-card animate-card">
+              <h5>About this application</h5>
+              <p class="muted">Visa AI Estimator uses historical visa application data and two ML engines: one estimates processing days and the other predicts final approval. An LLM generates customer-facing suggestions based on predictions. The UI provides charts, feedback capture, and a chatbot for quick questions.</p>
+              <div class="d-flex gap-2 mt-3">
+                <a href="predict.html" class="btn btn-cta">Make a prediction</a>
+                <a href="insights.html" class="btn btn-outline-cta">Generate insights</a>
+              </div>
+            </div>
+            
+            <div class="card p-3 feature-card mt-3 animate-card">
+              <h5>Recent activity</h5>
+              <ul id="recent-activity" class="muted">
+                <li>Model loaded — ready to accept predictions</li>
+                <li>10 predictions made in the last 24 hours</li>
+                <li>Average estimated days: 42</li>
+              </ul>
+            </div>
+          </div>
 
-    <main class="container my-5">
-      <h2 class="mb-3">Dashboard</h2>
-      <div class="row g-3">
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm">
-            <h6>Model Status</h6>
-            <p id="model-status" class="h5">Loading...</p>
+          <div class="col-lg-4">
+            <div class="card p-3 feature-card animate-card">
+              <h6>Quick features</h6>
+              <ul class="muted">
+                <li>Two-model prediction flow (days & acceptance)</li>
+                <li>LLM-driven customer suggestions</li>
+                <li>Export insights as PDF</li>
+              </ul>
+            </div>
+            
+            <div class="card p-3 feature-card mt-3 text-center">
+              <h6>Try it</h6>
+              <p class="muted">Use the Predict page to run an estimation and then try acceptance prediction. Watch the animated results.</p>
+              <a href="predict.html" class="btn btn-cta">Go to Predict</a>
+            </div>
           </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm">
-            <h6>Model RMSE</h6>
-            <p id="model-rmse" class="h5">-</p>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm">
-            <h6>Features</h6>
-            <p id="model-features" class="h5">-</p>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card p-3 shadow-sm">
-            <h6>Latest Verdict</h6>
-            <p id="latest-verdict" class="h5">—</p>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <footer class="text-center py-4 text-muted">&copy; 2026 Visa Processing Estimator</footer>
+        </section>
+      </main>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="app.js"></script>

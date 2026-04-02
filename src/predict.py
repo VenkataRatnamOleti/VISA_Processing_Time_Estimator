@@ -6,23 +6,58 @@ import numpy as np
 # Prevent pandas from showing downcasting warnings
 pd.set_option('future.no_silent_downcasting', True)
 
-# Define paths to your saved model artifacts
+# Define paths to your saved model artifacts (try several common names)
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-MODEL_FILE = os.path.join(BASE_PATH, "..", "models", "visa_model.pkl")
-RMSE_FILE = os.path.join(BASE_PATH, "..", "models", "model_rmse.pkl")
-SCHEMA_FILE = os.path.join(BASE_PATH, "..", "models", "model_features.pkl")
+MODELS_DIR = os.path.join(BASE_PATH, "..", "models")
+MODEL_CANDIDATES = [
+    os.path.join(MODELS_DIR, 'processing_days_model.pkl'),
+    os.path.join(MODELS_DIR, 'visa_model.pkl'),
+    os.path.join(MODELS_DIR, 'visa_model_pipeline.pkl')
+]
+RMSE_CANDIDATES = [os.path.join(MODELS_DIR, 'model_rmse.pkl'), os.path.join(MODELS_DIR, 'processing_days_rmse.pkl')]
+FEATURES_CANDIDATES = [os.path.join(MODELS_DIR, 'selected_features.pkl'), os.path.join(MODELS_DIR, 'model_features.pkl'), os.path.join(MODELS_DIR, 'model_features.pkl')]
+
+def find_first_existing(paths):
+    for p in paths:
+        if os.path.exists(p):
+            return p
+    return None
+
 
 class VisaProcessingEstimator:
     def __init__(self):
         """Load the trained model and feature structure."""
+        # attempt to find model, rmse, and features from common filenames
+        model_path = find_first_existing(MODEL_CANDIDATES)
+        rmse_path = find_first_existing(RMSE_CANDIDATES)
+        feats_path = find_first_existing(FEATURES_CANDIDATES)
         try:
-            self.predictor = joblib.load(MODEL_FILE)
-            self.error_val = joblib.load(RMSE_FILE)
-            self.model_columns = joblib.load(SCHEMA_FILE)
+            if model_path is None:
+                raise FileNotFoundError(f"No model file found in candidates: {MODEL_CANDIDATES}")
+            self.predictor = joblib.load(model_path)
+            if rmse_path and os.path.exists(rmse_path):
+                try:
+                    self.error_val = joblib.load(rmse_path)
+                except Exception:
+                    self.error_val = None
+            else:
+                self.error_val = None
+
+            if feats_path and os.path.exists(feats_path):
+                try:
+                    self.model_columns = joblib.load(feats_path)
+                except Exception:
+                    self.model_columns = None
+            else:
+                self.model_columns = None
+
             self.active = True
-            print("[+] Inference Engine successfully loaded.")
+            print(f"[+] Inference Engine successfully loaded from {model_path}.")
         except Exception as e:
             print(f"[-] Critical Error: Could not load model files. {e}")
+            self.predictor = None
+            self.error_val = None
+            self.model_columns = None
             self.active = False
 
     def get_estimation(self, user_inputs):
@@ -32,39 +67,43 @@ class VisaProcessingEstimator:
         if not self.active:
             return {"error": "Engine offline."}
 
-        # 1. ENGINEER FEATURES (Must match train_model.py exactly)
-        # Create company age
-        user_inputs['company_age'] = 2024 - user_inputs.get('yr_of_estab', 2000)
-        
-        # Calculate annual wage based on unit
-        wage_val = user_inputs.get('prevailing_wage', 0)
-        unit_type = user_inputs.get('unit_of_wage', 'Yearly')
-        rates = {'Monthly': 12, 'Weekly': 52, 'Hourly': 2080, 'Yearly': 1}
-        user_inputs['prevailing_wage_annual'] = wage_val * rates.get(unit_type, 1)
+        # If the model expects a specific feature list (pipeline created earlier), align to it
+        # Create DataFrame from user inputs
+        input_df = pd.DataFrame([user_inputs])
+        # derive application_month if application_date present
+        if 'application_date' in input_df.columns:
+            try:
+                input_df['application_date'] = pd.to_datetime(input_df['application_date'], errors='coerce')
+                input_df['application_month'] = input_df['application_date'].dt.month
+            except Exception:
+                input_df['application_month'] = pd.NA
 
-        # 2. ALIGN WITH TRAINING SCHEMA
-        # Convert dictionary to DataFrame and apply One-Hot Encoding (Dummies)
-        input_df = pd.get_dummies(pd.DataFrame([user_inputs]))
-        
-        # Create a blank DataFrame with all training columns initialized to 0
-        final_processed_df = pd.DataFrame(columns=self.model_columns)
-        
-        # Merge user input into the full feature set
-        final_processed_df = pd.concat([final_processed_df, input_df], ignore_index=True).fillna(0)
-        
-        # CRITICAL: Reorder and filter columns to match training set exactly
-        final_processed_df = final_processed_df[self.model_columns].astype(float)
+        if self.model_columns:
+            # ensure all required columns exist
+            for c in self.model_columns:
+                if c not in input_df.columns:
+                    input_df[c] = pd.NA
+            proc = input_df[self.model_columns]
+        else:
+            # fallback: use all columns provided, with dummies
+            proc = pd.get_dummies(input_df).fillna(0)
 
-        # 3. PREDICT
-        # 
-        raw_pred = self.predictor.predict(final_processed_df)[0]
-        
-        # Calculate uncertainty window
-        deviation = max(self.error_val * 0.2, raw_pred * 0.1)
-        
+        # Predict using the loaded predictor
+        try:
+            preds = self.predictor.predict(proc)
+            raw_pred = float(preds[0])
+        except Exception as e:
+            return {"error": f"prediction failed: {e}"}
+
+        # uncertainty window
+        if self.error_val is not None:
+            deviation = max(self.error_val * 0.2, raw_pred * 0.1)
+        else:
+            deviation = max(1.0, raw_pred * 0.1)
+
         return {
-            "estimated_days": round(float(raw_pred), 1),
-            "window": f"{int(raw_pred - deviation)} to {int(raw_pred + deviation)} days"
+            "estimated_days": round(raw_pred, 1),
+            "window": f"{int(max(0, raw_pred - deviation))} to {int(raw_pred + deviation)} days"
         }
 
 if __name__ == "__main__":

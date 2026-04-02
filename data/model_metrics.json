@@ -1,0 +1,8 @@
+{
+  "regression_rmse_sample": 25.3,
+  "classification_accuracy_sample": 0.874,
+  "classification_roc_auc_sample": 0.921,
+  "data_samples": 7500,
+  "model_accuracy_estimate": 85.0
+}
+

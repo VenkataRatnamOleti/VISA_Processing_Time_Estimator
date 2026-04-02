@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Feedback - VISA Insights</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+    <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">🌐</div>
+          <div class="title">Visa AI</div>
+        </div>
+        <nav class="side-nav">
+          <a href="dashboard.html" class="nav-link">Dashboard</a>
+          <a href="predict.html" class="nav-link">Predict</a>
+          <a href="insights.html" class="nav-link">Insights</a>
+          <a href="chat.html" class="nav-link">Chatbot</a>
+          <a href="stats.html" class="nav-link">Statistics</a>
+          <a href="feedback.html" class="nav-link active">Feedback</a>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+          <!-- Theme Toggle Top Right -->
+        <div class="d-flex justify-content-end mb-2">
+          <button id="themeToggle" class="theme-btn">🌓</button>
+        </div>
+        <h2>Feedback</h2>
+        <div class="card p-3 feature-card mt-3">
+          <form id="feedback-form">
+            <div class="mb-2"><label class="form-label">Your name</label><input id="feedback-name" class="form-control" required /></div>
+            <div class="mb-2"><label class="form-label">Email</label><input id="feedback-email" class="form-control" type="email" required /></div>
+            <div class="mb-2"><label class="form-label">Message</label><textarea id="feedback-message" class="form-control" rows="5" required></textarea></div>
+            <div class="d-flex gap-2"><button type="submit" class="btn btn-cta click-animate">Submit</button></div>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.getElementById('feedback-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('feedback-name').value;
+        const email = document.getElementById('feedback-email').value;
+        const message = document.getElementById('feedback-message').value;
+
+        try {
+          const base = window.__API_BASE || 'http://127.0.0.1:5000';
+          const response = await fetch(`${base}/api/feedback`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, message }),
+          });
+
+          if (response.ok) {
+            alert('Thank you for your feedback!');
+            document.getElementById('feedback-form').reset();
+          } else {
+            alert('Failed to submit feedback. Please try again later.');
+          }
+        } catch (error) {
+          console.error('Feedback submission error:', error);
+          alert('An error occurred. Please try again later.');
+        }
+      });
+    </script>
+    <script src="app.js"></script>
+  </body>
+</html>

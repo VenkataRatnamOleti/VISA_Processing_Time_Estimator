@@ -3,80 +3,198 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Predict - VISA Insights</title>
+    <title>Predict - Visa AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet" />
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/">VISA Insights</a>
-        <div class="collapse navbar-collapse" id="navmenu">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link active" href="predict.html">Predict</a></li>
-            <li class="nav-item"><a class="nav-link" href="insights.html">Insights</a></li>
-            <li class="nav-item"><a class="nav-link" href="chat.html">Chatbot</a></li>
-            <li class="nav-item"><a class="nav-link" href="stats.html">Statistics</a></li>
-          </ul>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">🌐</div>
+          <div class="title">Visa AI</div>
         </div>
-      </div>
-    </nav>
+        <nav class="side-nav">
+          <a href="dashboard.html" class="nav-link">Dashboard</a>
+          <a href="predict.html" class="nav-link active">Predict</a>
+          <span class="nav-link muted">Insights</span>
+          <a href="chat.html" class="nav-link">Chatbot</a>
+          <a href="stats.html" class="nav-link">Statistics</a>
+          <a href="feedback.html" class="nav-link">Feedback</a>
+        </nav>
+      </aside>
 
-    <main class="container my-5">
-      <h2 class="mb-3">Predict</h2>
-      <div class="row">
-        <div class="col-lg-6">
-          <form id="predict-form" class="card p-4 shadow-sm">
-            <div class="mb-3">
-              <label class="form-label">Prevailing wage</label>
-              <input type="number" class="form-control" id="prevailing_wage" value="6500" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Unit of wage</label>
-              <select id="unit_of_wage" class="form-select">
-                <option>Monthly</option>
-                <option>Yearly</option>
-                <option>Weekly</option>
-                <option>Hourly</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Year of Establishment</label>
-              <input id="yr_of_estab" type="number" class="form-control" value="2005" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Number of employees</label>
-              <input id="no_of_employees" type="number" class="form-control" value="150" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Visa type</label>
-              <select id="visa_type" class="form-select">
-                <option>Work</option>
-                <option>Student</option>
-                <option>Visitor</option>
-              </select>
-            </div>
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary">Estimate</button>
-              <button type="button" id="clear-btn" class="btn btn-outline-secondary">Clear</button>
-            </div>
-          </form>
+      <main class="main-content">
+        <!-- Theme Toggle Top Right -->
+        <div class="d-flex justify-content-end mb-2">
+          <button id="themeToggle" class="theme-btn">🌓</button>
         </div>
-        <div class="col-lg-6">
-          <div class="card p-4 shadow-sm">
-            <h5>Result</h5>
-            <p class="mb-1">Estimated processing days: <strong id="est-days">—</strong></p>
-            <p class="mb-1">Confidence window: <strong id="est-window">—</strong></p>
-            <p class="mb-1">Acceptance: <span id="est-verdict" class="badge bg-secondary">—</span> <small id="est-score"></small></p>
+
+        <h2>Predict</h2>
+        <div class="row mt-3">
+          <div class="col-lg-6">
+            <div class="card p-3 feature-card">
+              <h5>Estimate Processing Days</h5>
+              <form id="estimate-form">
+
+                <!-- Destination Country -->
+                <div class="mb-2">
+                  <label class="form-label">Destination Country</label>
+                  <select id="destination_country" class="form-select">
+                    <option>USA</option>
+                    <option>UAE</option>
+                    <option>Canada</option>
+                    <option>UK</option>
+                    <option>Australia</option>
+                    <option>Germany</option>
+                    <option>Singapore</option>
+                  </select>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-2">
+                    <label class="form-label">Visa type</label>
+                    <select id="visa_type" class="form-select">
+                      <option>Tourist</option>
+                      <option>Business</option>
+                      <option>Student</option>
+                      <option>Work</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <label class="form-label">Processing center</label>
+                    <select id="processing_center" class="form-select">
+                      <option>Center A</option>
+                      <option>Center B</option>
+                      <option>Center C</option>
+                      <option>Center D</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-2">
+                    <label class="form-label">Education</label>
+                    <select id="education_of_employee" class="form-select">
+                      <option>High School</option>
+                      <option>Master's</option>
+                      <option>Diploma</option>
+                      <option>Bachelor's</option>
+                      <option>PhD</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Work-specific fields -->
+                <div id="work-fields" style="display:none;">
+                  <div class="row">
+                    <div class="col-md-6 mb-2">
+                      <label class="form-label">Has job experience</label>
+                      <select id="has_job_experience" class="form-select">
+                        <option>Y</option>
+                        <option>N</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-2">
+                      <label class="form-label">Requires job training</label>
+                      <select id="requires_job_training" class="form-select">
+                        <option>N</option>
+                        <option>Y</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                      <label class="form-label">Job offer</label>
+                      <select id="job_offer" class="form-select">
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Missing</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-4 mb-2">
+                    <label class="form-label">Documents complete</label>
+                    <select id="documents_complete" class="form-select">
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4 mb-2">
+                    <label class="form-label">Years experience</label>
+                    <input id="years_experience" class="form-control" type="number" min="0" step="1" placeholder="e.g. 5" />
+                  </div>
+                  <div class="col-md-4 mb-2">
+                    <label class="form-label">Previous rejections</label>
+                    <input id="previous_visa_rejections" class="form-control" type="number" min="0" step="1" value="0" />
+                  </div>
+                </div>
+
+                <div class="mb-2">
+                  <label class="form-label">Application date</label>
+                  <input id="application_date" class="form-control" type="date" />
+                </div>
+
+                <div class="d-flex gap-2 mt-2">
+                  <button type="submit" class="btn btn-cta click-animate">Estimate</button>
+                  <button type="button" id="clear-btn" class="btn btn-outline-cta">Clear</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card p-3 feature-card">
+              <h5>Results</h5>
+              <p>Estimated processing days: <h2><strong id="est-days">—</strong></h2></p>
+              <p>Confidence window: <h2><strong id="est-window">—</strong></h2></p>
+            </div>
+
+            <div class="card p-3 feature-card mt-3">
+              <h5>Predict Acceptance</h5>
+              <form id="acceptance-form">
+                <div class="mb-2">
+                  <label class="form-label">Estimated days</label>
+                  <input id="accept_estimated_days" class="form-control" type="number" step="0.1" placeholder="e.g. 45" />
+                </div>
+                <div class="d-flex gap-2">
+                  <button id="use-estimate" type="button" class="btn btn-outline-cta">Use estimate</button>
+                  <button type="submit" class="btn btn-cta click-animate">Predict Acceptance</button>
+                </div>
+                <hr />
+                <p>Visa Approval: <h2><span id="est-verdict" class="badge bg-secondary">—</span></h2><small id="est-score"></small></p>
+              </form>
+            </div>
+
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
 
-    <footer class="text-center py-4 text-muted">&copy; 2026 Visa Processing Estimator</footer>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const visaType = document.getElementById("visa_type");
+        const workFields = document.getElementById("work-fields");
+
+        function toggleWorkFields() {
+          if (visaType.value === "Work") {
+            workFields.style.display = "block";
+          } else {
+            workFields.style.display = "none";
+          }
+        }
+
+        visaType.addEventListener("change", toggleWorkFields);
+        toggleWorkFields();
+      });
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
