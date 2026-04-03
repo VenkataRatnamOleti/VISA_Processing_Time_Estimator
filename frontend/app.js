@@ -1,4 +1,4 @@
-const API_BASE = window.__API_BASE || "http://127.0.0.1:5000";
+const API_BASE = "https://visa-processing-time-estimator.onrender.com";
 
 const GEMINI_API_KEY = "AIzaSyBrx95Yn7JJXF-sLX8wjm5mmg5UegWs9o0"; // ⚠️ Replace with your key (not secure for prod)
 
