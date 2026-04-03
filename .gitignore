@@ -1,0 +1,5 @@
+#.env contains secrets like API keys — keep it out of git
+.env
+.venv/
+venv/
+__pycache__/

@@ -9,6 +9,14 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+# Load environment variables from .env if present (allows storing API keys locally)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(BASE_DIR, '..', '.env'))
+except Exception:
+    # python-dotenv not installed or .env not present; environment variables will come from OS
+    pass
+
 try:
     from inference import predict_processing_days, predict_visa_status
 except Exception:
@@ -665,13 +673,14 @@ def stats():
 
 
 # Removed /api/chat - use frontend direct Gemini
-
+@app.route('/api/chat', methods=['POST'])
+def chat_api():
+    """Proxy chat requests to the configured LLM on the server side. Keys are loaded from environment/.env."""
     try:
         data = request.get_json(force=True)
         user_message = (data.get('message') or '').strip()
-        # Chat API: use Gemini exclusively. If Gemini is not configured or a call fails, inform frontend.
         gemini_key = os.environ.get('GEMINI_API_KEY')
-        app.logger.info('[*] chat(): GEMINI_API_KEY present=%s', bool(gemini_key))
+        app.logger.info('[*] chat_api(): GEMINI_API_KEY present=%s', bool(gemini_key))
         if not gemini_key:
             return jsonify({'success': False, 'error': 'Gemini not configured on server'}), 400
 
@@ -680,17 +689,16 @@ def stats():
             prompt = f"User: {user_message}\nAssistant:" if user_message else 'Hello'
             resp_text = _call_llm_server_side(prompt, gemini_key, model=model)
             if resp_text:
-                app.logger.info('[+] chat(): received LLM reply (len=%d)', len(resp_text))
+                app.logger.info('[+] chat_api(): received LLM reply (len=%d)', len(resp_text))
                 return jsonify({'success': True, 'reply': resp_text, 'source': model}), 200
             else:
                 return jsonify({'success': False, 'error': 'Gemini is not working'}), 503
         except Exception as e:
-            app.logger.warning('LLM call failed in chat(): %s', str(e))
+            app.logger.warning('LLM call failed in chat_api(): %s', str(e))
             return jsonify({'success': False, 'error': 'Gemini is not working'}), 503
-    except:
-        pass
-    # Generic fallback when unexpected error occurs
-    return jsonify({'success': False, 'error': 'Chat service error'}), 500
+    except Exception as e:
+        app.logger.exception('chat_api error')
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/track-visit', methods=['POST'])
 def track_visit():

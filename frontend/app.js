@@ -1,36 +1,18 @@
 const API_BASE = "https://visa-processing-time-estimator.onrender.com";
 
-const GEMINI_API_KEY = "AIzaSyBrx95Yn7JJXF-sLX8wjm5mmg5UegWs9o0"; // ⚠️ Replace with your key (not secure for prod)
-
-async function generateGeminiResponse(prompt, model = "gemini-2.0-flash") {
+// Do not store API keys in frontend. Use the server-side endpoints which read keys from env.
+async function generateGeminiResponse(prompt) {
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
-
-    const data = await response.json();
-    // Access generated text safely
-    const output = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated";
-    return { success: true, reply: output, model };
+    const res = await fetch(`${API_BASE}/api/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt }) });
+    if (!res.ok) {
+      const txt = await res.text().catch(()=>'<no body>');
+      throw new Error(`chat failed: ${res.status} ${res.statusText} - ${txt}`);
+    }
+    const js = await res.json();
+    if(js.success) return { success: true, reply: js.reply, model: js.source };
+    return { success: false, error: js.error || 'chat failed' };
   } catch (error) {
-    console.error("Gemini Error:", error);
+    console.error('Chat Error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -351,44 +333,16 @@ async function generateInsights(text){
 
     // Loading UI
     out.innerHTML = `<span class="text-muted">⏳ Generating insights...</span>`;
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Provide concise customer-service suggestions for:\n\n${text}`
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
-
+    // Call server endpoint which uses the configured LLM key
+    const res = await fetch(`${API_BASE}/api/generate-insights`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
     if(!res.ok){
       const errText = await res.text();
-      throw new Error(`Gemini ${res.status}: ${errText}`);
+      throw new Error(`Insights ${res.status}: ${errText}`);
     }
-
-    const data = await res.json();
-
-    const reply =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response generated";
-
-    // Format output nicely
-    const html = reply
-      .split('\n\n')
-      .map(p => `<p>${p.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</p>`)
-      .join('');
-
+    const js = await res.json();
+    if(!js.success) throw new Error(js.error || 'Insights generation failed');
+    const reply = js.suggestions || js.reply || js.suggestions_text || '';
+    const html = String(reply).split('\n\n').map(p => `<p>${p.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</p>`).join('');
     out.innerHTML = html;
 
   } catch(e){
