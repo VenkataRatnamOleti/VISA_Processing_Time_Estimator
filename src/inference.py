@@ -9,7 +9,7 @@ MODELS_DIR = BASE.parent / 'models'
 def load_artifacts():
     def _load_compat(p):
         try:
-            return joblib.load(p)
+            obj = joblib.load(p)
         except AttributeError as err:
             msg = str(err)
             if '_fill_dtype' in msg or 'SimpleImputer' in msg:
@@ -23,28 +23,40 @@ def load_artifacts():
             else:
                 raise
 
-        # best-effort: fix SimpleImputer instances so transform() won't error
+        # Best-effort fix: traverse the loaded object and repair any SimpleImputer
         try:
             import numpy as np
             from sklearn.impute import SimpleImputer
 
             def _fix(si):
                 try:
-                    if getattr(si, '_fill_dtype', None) is None:
-                        val = None
-                        if hasattr(si, 'statistics_') and getattr(si, 'statistics_', None) is not None:
-                            stats = si.statistics_
-                            try:
-                                if hasattr(stats, '__len__') and len(stats) > 0:
-                                    val = stats[0]
-                            except Exception:
-                                val = None
-                        if val is None and hasattr(si, 'fill_value'):
-                            val = si.fill_value
-                        if val is None:
-                            val = 0
+                    # If statistics_ missing, derive from fill_value or fallback
+                    if not hasattr(si, 'statistics_') or si.statistics_ is None:
+                        sval = None
+                        if hasattr(si, 'fill_value') and si.fill_value is not None:
+                            sval = si.fill_value
+
+                        # For categorical strategies, prefer 'Missing'
+                        strat = getattr(si, 'strategy', None)
+                        if sval is None and strat in ('most_frequent', 'constant'):
+                            sval = 'Missing'
+
+                        if sval is None:
+                            # numeric fallback
+                            sval = 0
+
                         try:
-                            si._fill_dtype = np.array([val]).dtype
+                            si.statistics_ = np.array([sval])
+                        except Exception:
+                            try:
+                                si.statistics_ = np.array([sval], dtype=object)
+                            except Exception:
+                                si.statistics_ = np.array([0])
+
+                    # Ensure _fill_dtype is set to a valid numpy dtype
+                    if getattr(si, '_fill_dtype', None) is None:
+                        try:
+                            si._fill_dtype = np.array(si.statistics_).dtype
                         except Exception:
                             si._fill_dtype = np.dtype('float64')
                 except Exception:
@@ -57,17 +69,21 @@ def load_artifacts():
                 if oid in seen:
                     return
                 seen.add(oid)
+
                 if isinstance(o, SimpleImputer):
                     _fix(o)
                     return
+
                 if isinstance(o, (list, tuple, set)):
                     for v in o:
                         _walk(v, seen)
                     return
+
                 if isinstance(o, dict):
                     for v in o.values():
                         _walk(v, seen)
                     return
+
                 try:
                     attrs = getattr(o, '__dict__', None)
                     if isinstance(attrs, dict):
@@ -182,6 +198,10 @@ def prepare_input(user_input, features):
 
 
 def predict_processing_days(user_input):
+    # sanitize input: replace None with 'Missing' to avoid None propagation into pipeline
+    if isinstance(user_input, dict):
+        user_input = {k: ("Missing" if v is None else v) for k, v in user_input.items()}
+
     reg, _, features = load_artifacts()
     X = prepare_input(user_input, features)
     pred = reg.predict(X)[0]
@@ -189,6 +209,10 @@ def predict_processing_days(user_input):
 
 
 def predict_visa_status(user_input):
+    # sanitize input: replace None with 'Missing'
+    if isinstance(user_input, dict):
+        user_input = {k: ("Missing" if v is None else v) for k, v in user_input.items()}
+
     _, clf, features = load_artifacts()
     X = prepare_input(user_input, features)
     prob = clf.predict_proba(X)[0,1] if hasattr(clf, 'predict_proba') else None

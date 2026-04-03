@@ -36,7 +36,7 @@ class VisaProcessingEstimator:
                 raise FileNotFoundError(f"No model file found in candidates: {MODEL_CANDIDATES}")
             def _load_compat(p):
                 try:
-                    return joblib.load(p)
+                    obj = joblib.load(p)
                 except AttributeError as err:
                     msg = str(err)
                     if '_fill_dtype' in msg or 'SimpleImputer' in msg:
@@ -50,64 +50,69 @@ class VisaProcessingEstimator:
                     else:
                         raise
 
-                    # attempt to fix SimpleImputer instances
-                    try:
-                        import numpy as np
-                        from sklearn.impute import SimpleImputer
+                # Fix SimpleImputer instances per rules: set statistics_, prefer 'Missing' for categorical
+                try:
+                    import numpy as np
+                    from sklearn.impute import SimpleImputer
 
-                        def _fix(si):
-                            try:
-                                if getattr(si, '_fill_dtype', None) is None:
-                                    val = None
-                                    if hasattr(si, 'statistics_') and getattr(si, 'statistics_', None) is not None:
-                                        stats = si.statistics_
-                                        try:
-                                            if hasattr(stats, '__len__') and len(stats) > 0:
-                                                val = stats[0]
-                                        except Exception:
-                                            val = None
-                                    if val is None and hasattr(si, 'fill_value'):
-                                        val = si.fill_value
-                                    if val is None:
-                                        val = 0
+                    def _fix(si):
+                        try:
+                            if not hasattr(si, 'statistics_') or si.statistics_ is None:
+                                sval = None
+                                if hasattr(si, 'fill_value') and si.fill_value is not None:
+                                    sval = si.fill_value
+                                strat = getattr(si, 'strategy', None)
+                                if sval is None and strat in ('most_frequent', 'constant'):
+                                    sval = 'Missing'
+                                if sval is None:
+                                    sval = 0
+                                try:
+                                    si.statistics_ = np.array([sval])
+                                except Exception:
                                     try:
-                                        si._fill_dtype = np.array([val]).dtype
+                                        si.statistics_ = np.array([sval], dtype=object)
                                     except Exception:
-                                        si._fill_dtype = np.dtype('float64')
-                            except Exception:
-                                pass
+                                        si.statistics_ = np.array([0])
 
-                        def _walk(o, seen=None):
-                            if seen is None:
-                                seen = set()
-                            oid = id(o)
-                            if oid in seen:
-                                return
-                            seen.add(oid)
-                            if isinstance(o, SimpleImputer):
-                                _fix(o)
-                                return
-                            if isinstance(o, (list, tuple, set)):
-                                for v in o:
+                            if getattr(si, '_fill_dtype', None) is None:
+                                try:
+                                    si._fill_dtype = np.array(si.statistics_).dtype
+                                except Exception:
+                                    si._fill_dtype = np.dtype('float64')
+                        except Exception:
+                            pass
+
+                    def _walk(o, seen=None):
+                        if seen is None:
+                            seen = set()
+                        oid = id(o)
+                        if oid in seen:
+                            return
+                        seen.add(oid)
+                        if isinstance(o, SimpleImputer):
+                            _fix(o)
+                            return
+                        if isinstance(o, (list, tuple, set)):
+                            for v in o:
+                                _walk(v, seen)
+                            return
+                        if isinstance(o, dict):
+                            for v in o.values():
+                                _walk(v, seen)
+                            return
+                        try:
+                            attrs = getattr(o, '__dict__', None)
+                            if isinstance(attrs, dict):
+                                for v in attrs.values():
                                     _walk(v, seen)
-                                return
-                            if isinstance(o, dict):
-                                for v in o.values():
-                                    _walk(v, seen)
-                                return
-                            try:
-                                attrs = getattr(o, '__dict__', None)
-                                if isinstance(attrs, dict):
-                                    for v in attrs.values():
-                                        _walk(v, seen)
-                            except Exception:
-                                pass
+                        except Exception:
+                            pass
 
-                        _walk(obj)
-                    except Exception:
-                        pass
+                    _walk(obj)
+                except Exception:
+                    pass
 
-                    return obj
+                return obj
 
             self.predictor = _load_compat(model_path)
             if rmse_path and os.path.exists(rmse_path):
@@ -141,6 +146,10 @@ class VisaProcessingEstimator:
         """
         if not self.active:
             return {"error": "Engine offline."}
+
+        # sanitize input: replace None with 'Missing' to avoid None propagation into pipeline
+        if isinstance(user_inputs, dict):
+            user_inputs = {k: ("Missing" if v is None else v) for k, v in user_inputs.items()}
 
         # If the model expects a specific feature list (pipeline created earlier), align to it
         # Create DataFrame from user inputs
