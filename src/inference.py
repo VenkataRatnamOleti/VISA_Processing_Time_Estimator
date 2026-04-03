@@ -85,6 +85,64 @@ def load_artifacts():
     reg = _load_compat(MODELS_DIR / 'processing_days_model.pkl')
     clf = _load_compat(MODELS_DIR / 'visa_status_model.pkl')
     features = _load_compat(MODELS_DIR / 'selected_features.pkl')
+
+    # Diagnostic: enumerate SimpleImputer instances and log their key attributes
+    try:
+        from sklearn.impute import SimpleImputer
+        def _find_imputers(o, found=None, seen=None):
+            if found is None:
+                found = []
+            if seen is None:
+                seen = set()
+            oid = id(o)
+            if oid in seen:
+                return found
+            seen.add(oid)
+
+            if isinstance(o, SimpleImputer):
+                found.append(o)
+                return found
+
+            if isinstance(o, (list, tuple, set)):
+                for v in o:
+                    _find_imputers(v, found, seen)
+                return found
+
+            if isinstance(o, dict):
+                for v in o.values():
+                    _find_imputers(v, found, seen)
+                return found
+
+            try:
+                attrs = getattr(o, '__dict__', None)
+                if isinstance(attrs, dict):
+                    for v in attrs.values():
+                        _find_imputers(v, found, seen)
+            except Exception:
+                pass
+            return found
+
+        reg_imputers = _find_imputers(reg, []) if reg is not None else []
+        clf_imputers = _find_imputers(clf, []) if clf is not None else []
+
+        if reg_imputers:
+            print(f"[+] Found {len(reg_imputers)} SimpleImputer(s) in regression pipeline")
+            for i, si in enumerate(reg_imputers):
+                try:
+                    print(f"    reg.imputer[{i}]: _fill_dtype={getattr(si, '_fill_dtype', None)}, fill_value={getattr(si, 'fill_value', None)}, statistics_={'<present>' if getattr(si, 'statistics_', None) is not None else '<none>'}")
+                except Exception:
+                    print(f"    reg.imputer[{i}]: <error reading attributes>")
+
+        if clf_imputers:
+            print(f"[+] Found {len(clf_imputers)} SimpleImputer(s) in classifier pipeline")
+            for i, si in enumerate(clf_imputers):
+                try:
+                    print(f"    clf.imputer[{i}]: _fill_dtype={getattr(si, '_fill_dtype', None)}, fill_value={getattr(si, 'fill_value', None)}, statistics_={'<present>' if getattr(si, 'statistics_', None) is not None else '<none>'}")
+                except Exception:
+                    print(f"    clf.imputer[{i}]: <error reading attributes>")
+    except Exception:
+        pass
+
     return reg, clf, features
 
 
