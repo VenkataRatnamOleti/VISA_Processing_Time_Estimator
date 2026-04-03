@@ -22,6 +22,38 @@ FRONTEND_DIR = os.path.join(BASE_DIR, '..', 'frontend')
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
 CORS(app)
 
+# Compatibility patch for scikit-learn SimpleImputer pickles
+try:
+    from sklearn.impute import SimpleImputer
+    if not hasattr(SimpleImputer, '_fill_dtype'):
+        SimpleImputer._fill_dtype = None
+except Exception:
+    # If sklearn not installed or import fails, we'll handle at load time
+    pass
+
+
+def load_model_compat(path):
+    """Load a joblib pickle with a fallback for SimpleImputer _fill_dtype AttributeError.
+
+    If loading raises an AttributeError referencing _fill_dtype or SimpleImputer,
+    attempt to monkey-patch SimpleImputer and retry once.
+    """
+    import joblib
+    try:
+        return joblib.load(path)
+    except AttributeError as err:
+        msg = str(err)
+        if '_fill_dtype' in msg or 'SimpleImputer' in msg:
+            try:
+                from sklearn.impute import SimpleImputer
+                if not hasattr(SimpleImputer, '_fill_dtype'):
+                    SimpleImputer._fill_dtype = None
+            except Exception:
+                pass
+            # retry once
+            return joblib.load(path)
+        raise
+
 
 def _save_analytics(updates: dict):
     """Merge `updates` into data/analytics.json (creating file if needed)."""
@@ -248,7 +280,7 @@ try:
 
     if acc_path and os.path.exists(acc_path):
         try:
-            acceptance_model = joblib.load(acc_path)
+            acceptance_model = load_model_compat(acc_path)
             # discover feature/columns file
             acc_cols_candidates = [
                 'acceptance_features.pkl',
@@ -262,7 +294,7 @@ try:
                 cpath = os.path.join(models_dir, nm)
                 if os.path.exists(cpath):
                     try:
-                        acceptance_model_columns = joblib.load(cpath)
+                        acceptance_model_columns = load_model_compat(cpath)
                         break
                     except Exception:
                         continue
@@ -458,8 +490,8 @@ def stats():
         stats['n_features'] = 0
         try:
             rmse_file = os.path.join(BASE_DIR, '..', 'models', 'model_rmse.pkl')
-            import joblib
-            stats['rmse'] = float(joblib.load(rmse_file))
+            # use compatibility loader for pickles created with different sklearn versions
+            stats['rmse'] = float(load_model_compat(rmse_file))
         except Exception:
             stats['rmse'] = None
 
