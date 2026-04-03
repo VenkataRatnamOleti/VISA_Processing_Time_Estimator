@@ -7,9 +7,84 @@ BASE = Path(__file__).resolve().parent
 MODELS_DIR = BASE.parent / 'models'
 
 def load_artifacts():
-    reg = joblib.load(MODELS_DIR / 'processing_days_model.pkl')
-    clf = joblib.load(MODELS_DIR / 'visa_status_model.pkl')
-    features = joblib.load(MODELS_DIR / 'selected_features.pkl')
+    def _load_compat(p):
+        try:
+            return joblib.load(p)
+        except AttributeError as err:
+            msg = str(err)
+            if '_fill_dtype' in msg or 'SimpleImputer' in msg:
+                try:
+                    from sklearn.impute import SimpleImputer
+                    if not hasattr(SimpleImputer, '_fill_dtype'):
+                        SimpleImputer._fill_dtype = None
+                except Exception:
+                    pass
+                obj = joblib.load(p)
+            else:
+                raise
+
+        # best-effort: fix SimpleImputer instances so transform() won't error
+        try:
+            import numpy as np
+            from sklearn.impute import SimpleImputer
+
+            def _fix(si):
+                try:
+                    if getattr(si, '_fill_dtype', None) is None:
+                        val = None
+                        if hasattr(si, 'statistics_') and getattr(si, 'statistics_', None) is not None:
+                            stats = si.statistics_
+                            try:
+                                if hasattr(stats, '__len__') and len(stats) > 0:
+                                    val = stats[0]
+                            except Exception:
+                                val = None
+                        if val is None and hasattr(si, 'fill_value'):
+                            val = si.fill_value
+                        if val is None:
+                            val = 0
+                        try:
+                            si._fill_dtype = np.array([val]).dtype
+                        except Exception:
+                            si._fill_dtype = np.dtype('float64')
+                except Exception:
+                    pass
+
+            def _walk(o, seen=None):
+                if seen is None:
+                    seen = set()
+                oid = id(o)
+                if oid in seen:
+                    return
+                seen.add(oid)
+                if isinstance(o, SimpleImputer):
+                    _fix(o)
+                    return
+                if isinstance(o, (list, tuple, set)):
+                    for v in o:
+                        _walk(v, seen)
+                    return
+                if isinstance(o, dict):
+                    for v in o.values():
+                        _walk(v, seen)
+                    return
+                try:
+                    attrs = getattr(o, '__dict__', None)
+                    if isinstance(attrs, dict):
+                        for v in attrs.values():
+                            _walk(v, seen)
+                except Exception:
+                    pass
+
+            _walk(obj)
+        except Exception:
+            pass
+
+        return obj
+
+    reg = _load_compat(MODELS_DIR / 'processing_days_model.pkl')
+    clf = _load_compat(MODELS_DIR / 'visa_status_model.pkl')
+    features = _load_compat(MODELS_DIR / 'selected_features.pkl')
     return reg, clf, features
 
 

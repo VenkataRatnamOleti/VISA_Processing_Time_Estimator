@@ -40,19 +40,94 @@ def load_model_compat(path):
     """
     import joblib
     try:
-        return joblib.load(path)
+        obj = joblib.load(path)
     except AttributeError as err:
         msg = str(err)
         if '_fill_dtype' in msg or 'SimpleImputer' in msg:
             try:
                 from sklearn.impute import SimpleImputer
+                # ensure class has attribute so unpickling succeeds
                 if not hasattr(SimpleImputer, '_fill_dtype'):
+                    # set a reasonable default; instances will be fixed after load
                     SimpleImputer._fill_dtype = None
             except Exception:
                 pass
             # retry once
-            return joblib.load(path)
-        raise
+            obj = joblib.load(path)
+    # After loading, ensure any SimpleImputer instances have a valid _fill_dtype
+    try:
+        import numpy as np
+        from sklearn.impute import SimpleImputer
+
+        def _fix_imputer_instance(si):
+            try:
+                if getattr(si, '_fill_dtype', None) is None:
+                    # Prefer statistics_ (computed during fit) if available
+                    val = None
+                    if hasattr(si, 'statistics_') and getattr(si, 'statistics_', None) is not None:
+                        stats = si.statistics_
+                        try:
+                            if hasattr(stats, '__len__') and len(stats) > 0:
+                                val = stats[0]
+                        except Exception:
+                            val = None
+                    if val is None and hasattr(si, 'fill_value'):
+                        val = si.fill_value
+                    # Fallback to zero if we still don't have a value
+                    if val is None:
+                        val = 0
+                    try:
+                        si._fill_dtype = np.array([val]).dtype
+                    except Exception:
+                        si._fill_dtype = np.dtype('float64')
+            except Exception:
+                pass
+
+        def _walk_and_fix(obj, seen=None):
+            if seen is None:
+                seen = set()
+            oid = id(obj)
+            if oid in seen:
+                return
+            seen.add(oid)
+
+            # SimpleImputer instance
+            if isinstance(obj, SimpleImputer):
+                _fix_imputer_instance(obj)
+                return
+
+            # containers
+            if isinstance(obj, (list, tuple, set)):
+                for v in obj:
+                    _walk_and_fix(v, seen)
+                return
+
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    _walk_and_fix(v, seen)
+                return
+
+            # sklearn estimators and other objects with attributes
+            try:
+                attrs = getattr(obj, '__dict__', None)
+                if isinstance(attrs, dict):
+                    for v in attrs.values():
+                        _walk_and_fix(v, seen)
+                    return
+            except Exception:
+                pass
+
+    except Exception:
+        # If sklearn or numpy not available, skip deep-fix
+        return obj
+
+    try:
+        _walk_and_fix(obj)
+    except Exception:
+        # best-effort only
+        pass
+
+    return obj
 
 
 def _save_analytics(updates: dict):
